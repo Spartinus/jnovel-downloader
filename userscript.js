@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         J-Novel Downloader
 // @namespace    http://tampermonkey.net/
-// @version      0.0.1
+// @version      0.0.2
 // @description  Downloads the content from their awful reader; just hit 'G'
 // @author       Adakenko
 // @include      /^https:\/\/j-novel\.club\/c\/(.+)\/read*/
@@ -19,13 +19,19 @@
 		var result = "";
 		for (let child of readerChildrenArray) {
 			var cs = child.outerHTML;
-			console.log(cs);
+
 			if (!cs.includes("<img src=")) {
-				cs = child.innerHTML;
+                cs = child.innerHTML;
+
+                // remove inline garbage
+                if (cs.includes("<em>")) {
+                    cs = cs.replace("<em>", "{").replace("</em>", "}");
+                }
+
 				result += cs + "\r\n";
 			}
 			else {
-				result += "[IMAGE PROVIDED] " + child.src + "\r\n";
+				result += "[IMAGE PROVIDED] " + child.src + "\r\n\r\n";
 			}
 		}
 
