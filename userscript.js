@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         J-Novel Downloader
 // @namespace    http://tampermonkey.net/
-// @version      0.0.2
+// @version      0.0.1
 // @description  Downloads the content from their awful reader; just hit 'G'
 // @author       Adakenko
 // @include      /^https:\/\/j-novel\.club\/c\/(.+)\/read*/
@@ -25,7 +25,8 @@
 
                 // remove inline garbage
                 if (cs.includes("<em>")) {
-                    cs = cs.replace("<em>", "{").replace("</em>", "}");
+                    cs = cs.replace(new RegExp("<em>", "gm"), "{")
+                    cs = cs.replace(new RegExp("</em>", "gm"), "}");
                 }
 
 				result += cs + "\r\n";
