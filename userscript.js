@@ -1,48 +1,73 @@
-<?xml version="1.0" encoding="UTF-8"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" xml:lang="en" unique-identifier="bw-ecode" prefix="ebpaj: http://www.ebpaj.jp/          ibooks: http://vocabulary.itunes.apple.com/rdf/ibooks/vocabulary-extensions-1.0/">
+// ==UserScript==
+// @name         J-Novel Downloader
+// @namespace    http://tampermonkey.net/
+// @version      0.0.1
+// @description  Downloads the content from their awful reader; just hit 'G'
+// @author       Adakenko
+// @include      /^https:\/\/j-novel\.club\/c\/(.+)\/read*/
+// @grant        none
+// ==/UserScript==
 
-<metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
+(function() {
 
-<!-- COMMENT REPLACED -->
-<dc:title id="title">FILLER_TITLE</dc:title>
-<meta refines="#title" property="file-as">FILLER_TITLE</meta>
+	'use strict';
 
-<!-- COMMENT REPLACED -->
-<dc:creator id="creator01">J-Novel Club</dc:creator>
-<meta refines="#creator01" property="role" scheme="marc:relators">FILLER_AUTHOR</meta>
-<meta refines="#creator01" property="file-as">FILLER_AUTHOR</meta>
-<meta refines="#creator01" property="display-seq">1</meta>
+	// GET CONTENTS OF READER AS STRING
+	function getReaderContents() {
+		let readerChildrenArray = Array.from(document.querySelector("#root ._1zL8fpy6UQ5YbHbsuUOngG").children);
 
-<!-- COMMENT REPLACED -->
-<dc:publisher id="publisher">One Peace Books</dc:publisher>
-<meta refines="#publisher" property="file-as">One Peace Books</meta>
+		var result = "";
+		for (let child of readerChildrenArray) {
+			var cs = child.outerHTML;
 
-<!-- COMMENT REPLACED -->
-<dc:language>en</dc:language>
+			if (!cs.includes("<img src=")) {
+                cs = child.innerHTML;
 
-<!-- COMMENT REPLACED -->
-<!-- COMMENT REPLACED --><meta property="dcterms:modified">2014-02-05T00:00:00Z</meta>
+                // remove inline garbage
+                if (cs.includes("<em>")) {
+                    cs = cs.replace(new RegExp("<em>", "gm"), "{")
+                    cs = cs.replace(new RegExp("</em>", "gm"), "}");
+                }
 
-<!-- COMMENT REPLACED -->
-<meta property="ebpaj:guide-version">1.1.2</meta>
-<meta property="ibooks:specified-fonts">true</meta>
+				result += cs + "\r\n";
+			}
+			else {
+				result += "[IMAGE PROVIDED] " + child.src + "\r\n\r\n";
+			}
+		}
 
-<!-- COMMENT REPLACED -->
+		return result;
+	};
 
-<dc:identifier xmlns:dc="http://purl.org/dc/elements/1.1/" id="bw-ecode">urn:uuid:347dce71-3939-4f85-8938-49605e5eaaf3</dc:identifier></metadata>
+	// DOWNLOAD TEXT (str) AS FILE WITH NAME (fileName)
+	function downloadText(str, fileName) {
+		var a = document.createElement("a");
+		a.setAttribute("href", "data:text/plain;charset=utf-16," + encodeURIComponent(str));
+		a.setAttribute("download", fileName)
+		a.style.display = "none";
 
-<manifest>
-    <!-- COMMENT REPLACED -->
-    <item media-type="image/jpeg" id="placehack" href="images/_1s_857sd_a91a_9t8ga.jpg" properties="cover-image"/>
-    <item xmlns="http://www.w3.org/1999/xhtml" media-type="images/jpeg" id="insert2" href="images/insert2.jpg" />
-    <item xmlns="http://www.w3.org/1999/xhtml" media-type="images/jpeg" id="insert1" href="images/insert1.jpg"/>
-    <item xmlns="http://www.w3.org/1999/xhtml" media-type="images/jpeg" id="lastboss_cvr_860" href="images/lastboss_cvr_860.jpg"/>
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+	};
 
-    <!-- COMMENT REPLACED -->
-    <item media-type="application/html+xml" id="entry" href="html/entry.html"/>
-</manifest>
+	// SETUP FUNCTION
+	window.downloadReaderContents = function () {
+		var readerContents = getReaderContents();
+		if (readerContents) {
+			const regex = /https:\/\/j-novel\.club\/c\/(.+)\/read/gm;
+			downloadText(readerContents, regex.exec(window.location.href)[1] + ".txt");
+		}
+	};
 
-<spine page-progression-direction="ltr">
-    <itemref linear="yes" idref="entry"/>
-</spine>
+	// EXECUTE FUNCTIONALITY
+	window.onload = function() {
+        document.onkeypress = function (e) {
+            e = e || window.event;
+            if (e.keyCode == 103) {
+                window.downloadReaderContents();
+            }
+        };
+	};
 
-</package>
+})();
